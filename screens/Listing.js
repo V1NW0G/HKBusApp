@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ScrollView} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ScrollView, RefreshControl} from 'react-native';
 import axios from 'axios';
 import { useNavigation } from "@react-navigation/native";
-// import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import moment from "moment";
+// import { getLocales } from "react-native-localize";
+
 
 
 const Listing = () => {
 
   const [data,setData] = useState([]);
   const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = () => {
     axios.get('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/BFA3460955AC820C')
@@ -50,23 +52,30 @@ const Listing = () => {
     });
   }
 
-//   useIntervalAsync(updateState, 3000);
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
 
   useEffect(() => {
     fetchData();
-    console.log(data)
-  }, []);
+    console.log(data);
+  }, [refreshing]);
 
-//   setIntervalAsync(() => {
-//     fetchData();
-//     console.log(1)
-//   }, 3000);
 
 
   return (
     <View style={styles.container}>
         
-        <ScrollView>
+        <ScrollView
+        contentContainerStyle={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+            
             {data.map(item => (
                 <TouchableOpacity onPress={() => navigation.navigate("Detail", { 
                         route: item.route,
@@ -83,6 +92,7 @@ const Listing = () => {
                 </TouchableOpacity>
             ))}
         </ScrollView>
+       
 
     </View>
   );
