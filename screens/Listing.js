@@ -1,88 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ScrollView} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ScrollView, RefreshControl} from 'react-native';
 import axios from 'axios';
 import { useNavigation } from "@react-navigation/native";
-// import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import moment from "moment";
-
+// import { getLocales } from "react-native-localize";
 
 const Listing = () => {
-
+  const [stop, setStop] = useState(["BFA3460955AC820C","5FB1FCAF80F3D97D"]);
   const [data,setData] = useState([]);
   const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = () => {
-    axios.get('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/BFA3460955AC820C')
-    .then(response => {
-        // Create an object where each key represents a unique route and the value is an array of all the ETAs for that route
-        const routeMap = {};
-        response.data.data.forEach(item => {
-            if (!routeMap[item.route]) {
-                routeMap[item.route] = [];
-            }
-            routeMap[item.route].push(item.eta);
-        });
 
-        // Sort each array of ETAs in ascending order and take the first element as the earliest ETA
-        const earliestETAs = [];
-        for (const route in routeMap) {
-            routeMap[route].sort();
+    const fetchData = async () => {
+      const requests = stop.map(stopId => axios.get(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`));
+      console.log(requests)
+      const responses = await Promise.all(requests);
+      const responseData = responses.map(response => response.data.data);
+      const mergedData = responseData.flat(); // merge data from both bus stops into a single array
+      setData(mergedData);
+    }
 
-            const eta = routeMap[route][0];
-            const current = moment();
-            const diff = moment.duration(moment(eta).diff(current));
-            const minutes = diff.asMinutes();
-            console.log(minutes)
-
-            earliestETAs.push({
-                route: route,
-                dest_tc: response.data.data.find(item => item.route === route).dest_tc,
-                serviceType: response.data.data.find(item => item.route === route).service_type,
-                eta: routeMap[route][0],
-                minutesLeft: minutes
-            });
+    function formatEtaDate(dateString,remark) {
+      if(dateString != null){
+        const current = moment();
+        const diff = moment.duration(moment(dateString).diff(current)); 
+        const minutes = diff.asMinutes();
+        const minutesLeft = Math.floor(minutes)
+        if(minutesLeft<=0){
+          return "-- mins"
         }
+        return minutesLeft+" mins"
+      }else{ //show error if no bus
 
-        setData(earliestETAs);
-    })
-    .catch(error => {
-        console.error(error);
-    });
-  }
+        if(remark != ""){
+          return remark
 
-//   useIntervalAsync(updateState, 3000);
+        }else{
+          return "沒有預定班次"
+        }
+      }
+    }
+    
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
 
   useEffect(() => {
     fetchData();
-    console.log(data)
-  }, []);
+    console.log(data);
+  }, [refreshing]);
 
-//   setIntervalAsync(() => {
-//     fetchData();
-//     console.log(1)
-//   }, 3000);
 
 
   return (
     <View style={styles.container}>
         
-        <ScrollView>
+        <ScrollView
+        contentContainerStyle={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+            
             {data.map(item => (
                 <TouchableOpacity onPress={() => navigation.navigate("Detail", { 
                         route: item.route,
                         serviceType: item.serviceType,
                         stopId: "BFA3460955AC820C"
                     })}>
-                    <View>
+                      
+                    {/* filter result shown only one by nearest time */}
+                    {item.eta_seq === 1 && (
+                    <View style={styles.itemContainer}>
                         <Text>{item.route}</Text>
                         <Text>{item.dest_tc}</Text>
-                        {/* <Text>{item.eta}</Text> */}
-                        <Text>{item.minutesLeft !== null && item.minutesLeft >= 0 ? `${Math.floor(item.minutesLeft)} 分鐘` : '暫時沒有班次'}</Text>
+                        
+                        <Text>{formatEtaDate(item.eta,item.rmk_tc)}</Text>
                         <Text> </Text>
                     </View>
+                    )}
                 </TouchableOpacity>
             ))}
         </ScrollView>
+       
 
     </View>
   );
@@ -93,6 +98,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
+
+    itemContainer: {
+      borderColor: "black",
+      borderWidth: 0.5,
+    }
 });
 
 export default Listing;
