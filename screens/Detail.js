@@ -1,12 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity, TouchableHighlight} from 'react-native';
 import axios from 'axios';
 import MapView, { Marker } from 'react-native-maps';
+import Geolocation from 'react-native-geolocation-service';
 
 const Detail = ({ route }) => {
   const { route: routeName, serviceType, stopId } = route.params;
   const [time, setTime] = useState([]);
   const [busGeo, setBusGeo] = useState({ lat: "", long: "" });
+
+
+  const requestLocationPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Geolocation Permission',
+          message: 'Can we access your location?',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      console.log('granted', granted);
+      if (granted === 'granted') {
+        console.log('You can use Geolocation');
+        return true;
+      } else {
+        console.log('You cannot use Geolocation');
+        return false;
+      }
+    } catch (err) {
+      return false;
+    }
+  };
+
 
   const fetchData = () => {
     axios.get(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${routeName}/${serviceType}`)
@@ -48,11 +76,15 @@ const Detail = ({ route }) => {
         <Marker coordinate={{ latitude: busGeo.lat, longitude: busGeo.long }} />
       </MapView>
 
+      
+
       {time.map(item2 => (
         <View>
           <Text>{item2.eta}</Text>
         </View>
       ))}
+
+      
     </View>
   );
 };
