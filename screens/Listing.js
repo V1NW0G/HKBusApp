@@ -70,8 +70,9 @@ const Listing = () => {
             {data.map(item => (
                 <TouchableOpacity onPress={() => navigation.navigate("Detail", { 
                         route: item.route,
-                        serviceType: item.serviceType,
-                        stopId: "BFA3460955AC820C"
+                        serviceType: item.service_type,
+                        stopId: "BFA3460955AC820C",
+                        bound: item.dir,
                     })}>
                       
                     {/* filter result shown only one by nearest time */}
