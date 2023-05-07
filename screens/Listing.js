@@ -34,10 +34,12 @@ const Listing = () => {
       }else{ //show error if no bus
 
         if(remark != ""){
-          return remark
+          // return remark
+          return "⛔"
 
         }else{
-          return "沒有預定班次"
+          // return "沒有預定班次"
+          return "⛔️"
         }
       }
     }
@@ -73,15 +75,16 @@ const Listing = () => {
                         serviceType: item.service_type,
                         stopId: "BFA3460955AC820C",
                         bound: item.dir,
+                        destination: item.dest_tc
                     })}>
                       
                     {/* filter result shown only one by nearest time */}
                     {item.eta_seq === 1 && (
                     <View style={styles.itemContainer}>
-                        <Text>{item.route}</Text>
-                        <Text>{item.dest_tc}</Text>
+                        <Text style={styles.routeText}>{item.route}</Text>
+                        <Text style={styles.destText}>{item.dest_tc}</Text>
                         
-                        <Text>{formatEtaDate(item.eta,item.rmk_tc)}</Text>
+                        <Text style={styles.etaText}>{formatEtaDate(item.eta,item.rmk_tc)}</Text>
                         <Text> </Text>
                     </View>
                     )}
@@ -101,9 +104,34 @@ const styles = StyleSheet.create({
     },
 
     itemContainer: {
-      borderColor: "black",
-      borderWidth: 0.5,
+      flexDirection: "row",
+      borderColor: "lightgray",
+      borderBottomWidth: 0.5,
+      justifyContent: "space-between",
+      padding: 10,
+      paddingTop: 15,
+      paddingBottom:15,
+      paddingLeft: 20,
+      paddingRight: -30,
+    },
+
+    routeText: {
+      fontSize: "20",
+      fontWeight: "bold"
+    },
+
+    destText: {
+      fontSize: "20",
+      paddingLeft: 40
+
+    },
+
+    etaText: {
+      fontSize: "20",
+      paddingLeft: 50
     }
+
+
 });
 
 export default Listing;

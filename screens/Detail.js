@@ -5,7 +5,7 @@ import MapView, { Marker } from 'react-native-maps';
 import moment from "moment";
 
 const Detail = ({ route }) => {
-  const { route: routeName, serviceType, stopId, bound } = route.params;
+  const { route: routeName, serviceType, stopId, bound , destination} = route.params;
   const [time, setTime] = useState([]);
   const [busGeo, setBusGeo] = useState({ lat: "", long: "" });
   const [busStopJson, setBusStopJson] = useState([]);
@@ -53,7 +53,7 @@ const Detail = ({ route }) => {
       });
   };
 
-  const fetchCoordinates = async () => {
+  const fetchStop = async () => {
       await axios.get(`https://data.etabus.gov.hk/v1/transport/kmb/stop`)
       .then(response => {
         const {data} = response.data;
@@ -74,16 +74,10 @@ const Detail = ({ route }) => {
     return stopName;
   }
 
-  function filterTimeTab(seq){
-    
-    console.log(time)
-    console.log(seq)
-    const eta = time.find(eta => eta.seq == seq)
-    console.log(eta)
-    
-    
-    return seq
-    
+  function getLocation(stopid){
+    const selectedStop = busStopInfoJson.find(stop => stop.stop == stopid);
+    const { lat, long } = selectedStop; 
+    setBusGeo({ lat, long });
   }
 
   function formatEtaDate(dateString,remark) {
@@ -120,21 +114,20 @@ const Detail = ({ route }) => {
     fetchTimeData();
     fetchLocation();
     BusStopLocation();
-    fetchCoordinates();
+    fetchStop();
   }, [refreshing]);
 
   return (
     <View style={styles.container}>
-      <Text>Route: {routeName}</Text>
-      <Text>Service Type: {serviceType}</Text>
-      <Text>Stop Id: {stopId}</Text>
-      <View>
-        <Text>{busGeo.lat}</Text>
-        <Text>{busGeo.long}</Text>
+      <View style={styles.topBar}>
+        <Text style={styles.topTittle}>{routeName}</Text>
+        <Text style={styles.topTittle2}> 往</Text>
+        <Text style={styles.topTittle}>{destination}</Text>
       </View>
-
-      <MapView style={{ height: 300, width: "100%" }} region={{ latitude: busGeo.lat, longitude: busGeo.long, latitudeDelta: 0.0022, longitudeDelta: 0.021 }}>
-        <Marker coordinate={{ latitude: busGeo.lat, longitude: busGeo.long }} />
+      <MapView style={{ height: 300, width: "100%" }} region={{ latitude: busGeo.lat, longitude: busGeo.long, latitudeDelta: 0.002, longitudeDelta: 0.021 }}>
+        <Marker 
+          coordinate={{ latitude: busGeo.lat, longitude: busGeo.long }}
+        />
       </MapView>
 
 
@@ -155,7 +148,10 @@ const Detail = ({ route }) => {
           <View key={index}>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setSelectedStop(selectedStop === index ? null : index)}
+              onPress={() => {
+                setSelectedStop(selectedStop === index ? null : index);
+                getLocation(item.stop);
+              }}
             >
               <View style={styles.itemContainer}>
                 <Text style={styles.itemText}>{item.seq}.</Text>
@@ -168,7 +164,7 @@ const Detail = ({ route }) => {
               time.seq == item.seq &&(
               <View style={styles.timeContainer}>
                 <Text style={styles.timeText}>{formatEtaDate(time.eta)!=null?formatEtaDate(time.eta):time.rmk_tc}</Text>
-                <Text style={styles.timeMinsText}>分鐘</Text>
+                <Text style={styles.timeMinsText}>{formatEtaDate(time.eta)!=null?"分鐘":""}</Text>
                 <Text style={styles.timeRemarkText}>{time.rmk_tc}</Text>
               </View>
               )))
@@ -224,7 +220,24 @@ const styles = StyleSheet.create({
     color: "gray",
     alignSelf: "flex-end",
     paddingLeft: 5 
-  }
+  },
+
+  topBar: { 
+    flexDirection: "row",
+    alignSelf: "center"
+  },
+
+  topTittle: { 
+    fontSize: 20,
+    paddingLeft: 5,
+    paddingTop:5,
+    paddingBottom:5,
+  },
+
+  topTittle2: { 
+    fontSize: 14,
+    alignSelf: "center"
+  },
 
 });
 
