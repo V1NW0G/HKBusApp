@@ -163,7 +163,7 @@ const Detail = ({ route }) => {
               time.map(time => (
               time.seq == item.seq &&(
               <View style={styles.timeContainer}>
-                <Text style={styles.timeText}>{formatEtaDate(time.eta)!=null?formatEtaDate(time.eta):time.rmk_tc}</Text>
+                <Text style={styles.timeText}>{formatEtaDate(time.eta)!=null?formatEtaDate(time.eta):""}</Text>
                 <Text style={styles.timeMinsText}>{formatEtaDate(time.eta)!=null?"分鐘":""}</Text>
                 <Text style={styles.timeRemarkText}>{time.rmk_tc}</Text>
               </View>
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: 18,
+    color: "blue"
   },
 
   timeMinsText: {

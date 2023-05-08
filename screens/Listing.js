@@ -70,7 +70,10 @@ const Listing = () => {
         }>
             
             {data.map(item => (
-                <TouchableOpacity onPress={() => navigation.navigate("Detail", { 
+                <TouchableOpacity 
+                    activeOpacity={0.8}
+                
+                    onPress={() => navigation.navigate("Detail", { 
                         route: item.route,
                         serviceType: item.service_type,
                         stopId: "BFA3460955AC820C",
